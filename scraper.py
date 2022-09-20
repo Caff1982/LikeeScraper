@@ -19,7 +19,7 @@ def usage():
         # Get user info from Likee api
         python scraper user_info -ui <user-id>
         # Get user post counts
-        python scraper user_post_counts -ui <user-id>
+        python scraper user_post_count -ui <user-id>
         # Get 50 user videos
         python scraper user_videos -ui <user-id> -l 50
         # Get 50 trending videos

@@ -26,7 +26,7 @@ python scraper.py user_info -ui <user-id>
 ```
 Get user post counts
 ```
-python scraper.py user_post_counts -ui <user-id>
+python scraper.py user_post_count -ui <user-id>
 ```
 Get 50 user videos
 ```

@@ -5,6 +5,13 @@ import os
 from api import API
 
 
+# Dictionary to store configuration settings
+config = {
+    'download_dir': 'videos/',
+    'country': 'US',
+    'language': 'en'
+}
+
 def usage():
     return """
         # Get user-id from username
@@ -78,12 +85,6 @@ def create_parser():
 
 
 if __name__ == '__main__':
-    # Dictionary to store configuration settings
-    config = {
-        'download_dir': 'videos/',
-        'country': 'US',
-        'language': 'en'
-    }
     # Parse command-line arguments
     parser = create_parser()
     args = parser.parse_args()

@@ -16,7 +16,7 @@ pip install -r requirements.txt
 
 ## Usage
 
-Get user-id from username
+Get user-id using username
 ```
 python scraper.py user_id -un <username>
 ```
@@ -46,7 +46,7 @@ python scraper.py hashtag_videos -hi <hashtag-id> -l 50
 ```
 Get the comments for a video
 ```
-python video_comments.py -vu <video-url> -l 50
+python scraper.py video_comments -vu <video-url> -l 50
 ```
 
 To save results to a JSON file use -o and specify the filename to save the results to.

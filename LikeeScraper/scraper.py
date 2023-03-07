@@ -1,9 +1,7 @@
 import argparse
 import json
 import os
-
-from api import API
-
+from LikeeScraper.api import API
 
 # Dictionary to store configuration settings
 config = {
@@ -11,6 +9,7 @@ config = {
     'country': 'US',
     'language': 'en'
 }
+
 
 def usage():
     return """
@@ -84,7 +83,7 @@ def create_parser():
     return parser
 
 
-if __name__ == '__main__':
+def start_scraper():
     # Parse command-line arguments
     parser = create_parser()
     args = parser.parse_args()
@@ -114,7 +113,7 @@ if __name__ == '__main__':
             raise Exception('User-id must be supplied for get user-videos')
         response = api.get_user_videos(args.userid, limit=args.limit)
     elif args.mode == 'trending_videos':
-        response = api.get_trending_videos(limit=args.limit) 
+        response = api.get_trending_videos(limit=args.limit)
     elif args.mode == 'trending_hashtags':
         response = api.get_trending_hashtags(limit=args.limit)
     elif args.mode == 'hashtag_videos':
@@ -128,12 +127,12 @@ if __name__ == '__main__':
         limit = 10 if not args.limit else args.limit
         response = api.get_video_comments(args.videourl, limit=limit)
 
-    if args.output: # Save response as json file
+    if args.output:  # Save response as json file
         with open(args.output, 'w') as f:
             f.write(json.dumps(response, indent=2))
-    if args.verbose: # Print to std out
+    if args.verbose:  # Print to std out
         print(json.dumps(response, indent=2))
-    if args.download: # Download videos
+    if args.download:  # Download videos
         # Create download_dir if it does not exist
         if not os.path.exists(config['download_dir']):
             os.mkdir(config['download_dir'])
@@ -144,5 +143,5 @@ if __name__ == '__main__':
             filename = f"{item['likeeId']}_{item['postId']}.mp4"
             filepath = os.path.join(config['download_dir'], filename)
             if args.verbose:
-                print('Dowloading: ', filepath)
+                print('Downloading: ', filepath)
             api.download_video(video_url, filepath)

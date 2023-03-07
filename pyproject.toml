@@ -1,0 +1,34 @@
+[build-system]
+requires = ["setuptools", "setuptools-scm"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "LikeeScraper"
+version = "1.0.0"
+description = "A command-line application written in Python that can be used for scraping information from Likee."
+readme = "README.md"
+requires-python = ">=3.10"
+license = {file = "LICENSE"}
+keywords = ["python", "scraper", "python3", "likee-downloader", "likee"]
+authors = [{name = "Stephen Cafferty", email = "stephencafferty@hotmail.com"}]
+classifiers = [
+  "Development Status :: 5 - Production/Stable",
+  "Programming Language :: Python :: 3",
+  "Intended Audience :: Information Technology",
+  "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
+  "Operating System :: OS Independent",
+  "Natural Language :: English"
+]
+
+dependencies = [
+    "requests",
+    "selenium",
+]
+
+[project.urls]
+homepage = "https://github.com/Caff1982/LikeeScraper"
+documentation = "https://github.com/Caff1982/LikeeScraper/blob/main/README.md"
+repository = "https://github.com/Caff1982/LikeeScraper.git"
+
+[project.scripts]
+LikeeScraper = "LikeeScraper.scraper:start_scraper"

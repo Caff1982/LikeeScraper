@@ -41,6 +41,19 @@ def usage():
 
 
 def create_parser():
+    """
+    Creates and returns an ArgumentParser object for parsing
+    command-line arguments.
+
+    The parser is configured to recognize various modes and options
+    for the Likee Scraper.These include fetching user information,
+    videos, comments, and more, as well as specifying output formats
+    and other preferences.
+
+    Returns:
+        argparse.ArgumentParser: The configured parser for
+            command-line arguments.
+    """
     parser = argparse.ArgumentParser(description='Likee Scraper',
                                      usage=usage())
     parser.add_argument('mode',
@@ -73,18 +86,30 @@ def create_parser():
                         help='The hashtag-id to search for')
     parser.add_argument('-d',
                         '--download',
-                        type=bool,
-                        help='Set to True to download videos.',
-                        default=False)
+                        action='store_false',
+                        help='Set to True to download videos.')
     parser.add_argument('-v',
                         '--verbose',
-                        type=bool,
-                        help='Set to False to stop results being printed out.',
-                        default=True)
+                        action='store_true',
+                        help='Set to False to stop results being printed out.')
     return parser
 
 
 def start_scraper():
+    """
+    Main driver function for the Likee Scraper.
+
+    Parses command-line arguments, interacts with the Likee API,
+    and manages the output. Depending on the mode specified, it can
+    fetch user information, videos, comments, and more. Results can
+    be printed to the console, saved to a file, or videos can be
+    downloaded.
+
+    Raises:
+        Exception: If an invalid mode is entered or required
+        arguments are missing.
+    """
+
     # Parse command-line arguments
     parser = create_parser()
     args = parser.parse_args()

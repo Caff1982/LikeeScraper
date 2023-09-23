@@ -6,7 +6,6 @@ import urllib.parse
 import os
 
 import requests
-from selenium import webdriver
 from selenium.webdriver.firefox.options import Options
 from selenium.webdriver import Firefox
 from selenium.webdriver.common.action_chains import ActionChains
@@ -15,7 +14,29 @@ from selenium.webdriver.common.by import By
 
 class API:
     """
-    Main class for interacting with the Likee API
+    A class to interact with the Likee API and scrape data from
+    the Likee platform.
+
+    This class provides methods to:
+    - Fetch user information and videos.
+    - Retrieve trending videos and hashtags.
+    - Download videos from given URLs.
+    - Extract comments from videos.
+
+    Attributes:
+        country (str): The country for the API requests. Default is 'US'.
+        language (str): The language for the API requests. Default is 'en'.
+        pause_time (int): The base time (in seconds) to pause between
+            requests to avoid rate limits. A random additional time
+            between 0 and 1 second is added to this base time.
+        headless (bool): Whether to run the selenium browser in headless
+            mode, useful for debuggin. Default is True.
+
+    Example:
+        api = API(country='UK', language='en')
+        user_id = api.get_user_id('example_username')
+        user_info = api.get_user_info(user_id)
+        print(user_info)
     """
 
     def __init__(self, country='US', language='en',
@@ -32,6 +53,7 @@ class API:
         self.hashtag_vids_endpoint = 'https://likee.video/official_website/VideoApi/getEventVideo'
         self.video_comments_endpoint = 'https://likee.video/live/home/comments'
         self.user_post_count_endpoint = 'https://api.like-video.com/likee-activity-flow-micro/userApi/getUserPostNum'
+        
         # Creating both JSON and form headers
         self.json_headers = requests.utils.default_headers().update({
                 'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/105.0.0.0 Safari/537.36',
@@ -57,9 +79,32 @@ class API:
 
     def make_post_request(self, payload, endpoint, content_type='json'):
         """
-        A function to make all post requests to the API.
-        content_type denotes the headers to be used, either
-        json or url-form-encoded
+        Sends a POST request to the specified API endpoint.
+
+        This method sends a POST request to the given endpoint with
+        the provided payload. The headers used for the request are
+        determined by the content_type argument.
+
+        Parameters:
+            payload (dict): The data to be sent in the POST request.
+            endpoint (str): The URL of the API endpoint for the request.
+            content_type (str, optional): The type of content being sent.
+                It determines the headers used for the request.
+                Accepts either 'json' (default) or 'url-form-encoded'.
+
+        Returns:
+            dict: The JSON response from the API if the request is successful.
+                If there's an HTTP error or the API returns an error message,
+                an empty dictionary is returned.
+
+        Raises:
+            None: Errors are handled internally by displaying error messages,
+                no exceptions are raised to the caller.
+
+        Example:
+            payload = {'uid': '12345'}
+            response = api.make_post_request(payload, 'example_endpoint')
+            print(response)
         """
         if content_type == 'json':
             response = requests.post(endpoint,
@@ -86,7 +131,26 @@ class API:
 
     def get_user_id(self, username):
         """
-        Returns the users id (uid) from username
+        Retrieves the user's unique identifier (uid) based on their username.
+
+        This method navigates to the user's profile page, clicks on the
+        first video, and then extracts the user's uid from the video page's
+        source code using a regex pattern.
+
+        The regex pattern 'window.data = ({.*?});' is used to capture the
+        JSON data embedded in the page's JavaScript, which contains the
+        user's uid among other details.
+
+        Parameters:
+            username (str): The username of the target user on Likee.
+
+        Returns:
+            str or None: The user's unique identifier (uid) if found,
+                or returns None if the uid cannot be retrieved.
+
+        Example:
+            uid = api.get_user_id('example_username')
+            print(uid)
         """
         # Get user's profile page
         response = self.driver.get(f'https://likee.video/@{username}')
@@ -113,8 +177,19 @@ class API:
 
     def get_user_info(self, user_id):
         """
-        Gets the user's information using Likee API.
-        N.B. This appears to return 'null' for most fields
+        Retrieves detailed information about a user based on their
+        unique identifier (uid).
+
+        This method sends a POST request to the Likee API's user
+        information endpoint to fetch details about the user. Note that the
+        Likee API might return 'null' for some fields, indicating that the
+        information is not available or not provided by the user.
+
+        Parameters:
+            user_id (str): The unique identifier (uid) of the user on Likee.
+
+        Returns:
+            dict: A dictionary containing the user's information.
         """
         payload = {
             'uid': user_id
@@ -124,7 +199,33 @@ class API:
 
     def get_user_videos(self, user_id, limit=10, last_post_id='', videos=[]):
         """
-        Gets the user's uploaded videos and returns api json response.
+        Retrieves a list of videos uploaded by a user based on
+        their unique identifier (uid).
+
+        This method sends a POST request to the Likee API's user videos
+        endpoint to fetch the videos uploaded by the user. It uses recursion
+        to paginate through the results and fetch the desired number of
+        videos specified by the `limit` parameter.
+
+        Parameters:
+            user_id (str): The unique identifier (uid) of the Likee user.
+            limit (int, optional): The maximum number of videos to retrieve.
+                Default is 10.
+            last_post_id (str, optional): The post ID of the last video
+                fetched in the previous request. Used for pagination.
+                Default is an empty string.
+            videos (list, optional): A list to store the fetched videos.
+                Used internally for recursion. Default is an empty list.
+
+        Returns:
+            list: A list of dictionaries, each representing a video
+            uploaded by the user. The structure and fields of these
+            dictionaries depend on the Likee API's response.
+
+        Example:
+            user_videos = api.get_user_videos('12345', limit=20)
+            for video in user_videos:
+                print(video['likeeId'], video['videoUrl'])
         """
         payload = {
             'country': self.country,
@@ -151,6 +252,12 @@ class API:
     def get_user_post_count(self, user_id):
         """
         Returns the user's post count from the API.
+
+        Parameters:
+            user_id (str): The unique identifier (uid) of the Likee user.
+
+        Returns:
+            dict: A dictionary containing the user's post counts.
         """
         payload = {
             'country': self.country,
@@ -168,7 +275,34 @@ class API:
                             last_post_id=0,
                             video_list=[]):
         """
-        Returns the top 30 trending videos by default
+        Retrieves a list of trending videos from the Likee platform.
+
+        This method sends a POST request to the Likee API's trending
+        videos endpoint to fetch the most popular videos. It uses recursion
+        to paginate through the results and fetch the desired number of
+        videos specified by the `limit` parameter.
+
+        Parameters:
+            limit (int, optional): The maximum number of trending videos
+                to retrieve. Default is 30.
+            start (int, optional): The starting number for pagination.
+                Default is 0.
+            last_post_id (int, optional): The post ID of the last video
+                fetched in the previous request. Used for pagination.
+                Default is 0.
+            video_list (list, optional): A list to store the fetched videos.
+                Typically used internally for recursion. Default is an
+                empty list.
+
+        Returns:
+            list: A list of dictionaries, each representing a trending video.
+            The structure and fields of these dictionaries depend on the
+            Likee API's response.
+
+        Example:
+            trending_videos = api.get_trending_videos(limit=50)
+            for video in trending_videos:
+                print(video['title'], video['url'])
         """
         payload = {
             'scene': 'WELOG_POPULAR',
@@ -194,7 +328,26 @@ class API:
 
     def get_trending_hashtags(self, limit=20, page=1, hashtags=[]):
         """
-        Get top hashtags by country/language.
+        Retrieves a list of trending hashtags from the Likee platform
+        based on country and language.
+
+        This method sends a POST request to the Likee API's trending
+        hashtags endpoint to fetch the most popular hashtags. It uses
+        recursion to paginate through the results and fetch the desired
+        number of hashtags specified by the `limit` parameter.
+
+        Parameters:
+            limit (int, optional): The maximum number of trending hashtags
+                to retrieve. Default is 20.
+            page (int, optional): The page number for pagination.
+                Default is 1.
+            hashtags (list, optional): A list to store the fetched hashtags.
+                Used internally for recursion. Default is an empty list.
+
+        Returns:
+            list: A list of dictionaries, each representing a trending
+            hashtag. The structure and fields of these dictionaries depend
+            on Likee API's response.
         """
         payload = {
             'pagesize': 20,
@@ -216,8 +369,29 @@ class API:
 
     def get_hashtag_videos(self, hashtag_id, limit=50, page=1, videos=[]):
         """
-        Returns most popular videos by hashtag_id
-        within a country. Returns top 50 by default
+        Retrieves a list of popular videos associated with a specific
+        hashtag from the Likee platform.
+
+        This method sends a POST request to the Likee API's hashtag
+        videos endpoint to fetch videos associated with the given
+        hashtag ID. It uses recursion to paginate through the results
+        and fetch the desired number of videos specified by the `limit`
+        parameter.
+
+        Parameters:
+            hashtag_id (str): The unique identifier of the target
+                hashtag on Likee.
+            limit (int, optional): The maximum number of videos to
+                retrieve for the given hashtag. Default is 50.
+            page (int, optional): The page number for pagination.
+                Default is 1.
+            videos (list, optional): A list to store the fetched videos.
+                Used internally for recursion. Default is an empty list.
+
+        Returns:
+            list: A list of dictionaries, each representing a video
+            associated with the hashtag. The structure and fields of
+            these dictionaries depend on the Likee API's response.
         """
         payload = {
             'topicId': hashtag_id,
@@ -240,7 +414,30 @@ class API:
 
     def get_video_comments(self, video_url, limit=10):
         """
-        Gets the comments for specified video url
+        Retrieves a list of comments from a specified video URL on
+        the Likee platform.
+
+        This method navigates to the provided video URL, clicks on
+        the video to view its comments, and then scrolls through the
+        comments section to fetch the desired number of comments
+        specified by the `limit` parameter. The method handles
+        pagination by scrolling and fetching comments until the desired
+        limit is reached or there are no more comments.
+
+        Parameters:
+            video_url (str): The URL of the target video on Likee.
+            limit (int, optional): The maximum number of comments to
+                retrieve for the given video. If the video has fewer
+                comments than the specified limit, all available comments
+                will be fetched. Default is 10.
+
+        Returns:
+            list: A list of dictionaries, each representing a comment.
+                Each dictionary contains the following keys:
+                - 'username': The username of the commenter.
+                - 'comment_text': The text content of the comment.
+                - 'time': The timestamp of the comment.
+                - 'like_count': The number of likes the comment received.
         """
         # Open the url and click on image to view comments
         self.driver.get(video_url)
@@ -312,7 +509,29 @@ class API:
 
     def download_video(self, video_url, filepath):
         """
-        Downloads the video to the specified filepath.
+        Downloads a video from the specified URL and saves it to the
+        given filepath.
+
+        This method fetches the video content from the provided URL and
+        writes it to a file at the specified filepath. Before downloading,
+        the method modifies the URL to remove any watermark that might be
+        present in the video. If the video download request times out, an
+        error message is printed, and the method returns without saving
+        the video.
+
+        Parameters:
+            video_url (str): The URL of the target video on Likee.
+            filepath (str): The path (including filename and extension)
+                where the video should be saved.
+
+        Returns:
+            None: The method saves the video to the specified filepath but
+            does not return any value.
+
+        Raises:
+            None: Errors, such as timeouts, are handled internally by
+                printing error messages, but no exceptions are raised
+                to the caller.
         """
         # Removing '_4' from url to ensure the watermark is not present
         video_url = video_url.replace('_4', '')
@@ -327,28 +546,3 @@ class API:
 
         with open(filepath, 'wb') as f:
             f.write(video.content)
-
-
-if __name__ == '__main__':
-    # Dictionary to store configuration settings
-    config = {
-        'download_dir': '/home/stephen/Projects/likee/videos/',
-        'country': 'US',
-        'language': 'en'
-    }
-
-    def download_response(response):
-        # Iterate through each video and download & save
-        for item in response:
-            video_url = item['videoUrl']
-            filename = f"{item['likeeId']}_{item['postId']}.mp4"
-            filepath = os.path.join(config['download_dir'], filename)
-
-            print('Downloading: ', filepath)
-            api.download_video(video_url, filepath)
-
-    api = API(country='UK', language='en', headless=False)
-
-    # Test user id from username
-    user_id = api.get_user_id('ulvaatkins')
-    print('User id: ', user_id)  # 1420839773

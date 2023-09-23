@@ -1,3 +1,4 @@
 pycache/
 videos/
+dist/
 geckodriver.log

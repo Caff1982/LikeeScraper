@@ -7,7 +7,7 @@ name = "LikeeScraper"
 version = "1.0.0"
 description = "A command-line application written in Python that can be used for scraping information from Likee."
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.9"
 license = {file = "LICENSE"}
 keywords = ["python", "scraper", "python3", "likee-downloader", "likee"]
 authors = [{name = "Stephen Cafferty", email = "stephencafferty@hotmail.com"}]

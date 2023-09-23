@@ -41,7 +41,8 @@ def usage():
 
 
 def create_parser():
-    parser = argparse.ArgumentParser(description='Likee Scraper', usage=usage())
+    parser = argparse.ArgumentParser(description='Likee Scraper',
+                                     usage=usage())
     parser.add_argument('mode',
                         help="""options:  [user_id, user_info, user_post_count,
                                            user_videos, trending_videos,
@@ -118,11 +119,11 @@ def start_scraper():
         response = api.get_trending_hashtags(limit=args.limit)
     elif args.mode == 'hashtag_videos':
         if args.hashtagid is None:
-            raise Exception('hashtag-id must be supplied to get hashtag videos')
+            raise Exception('hashtag-id is required to get hashtag videos')
         response = api.get_hashtag_videos(args.hashtagid, limit=args.limit)
     elif args.mode == 'video_comments':
         if args.videourl is None:
-            raise Exception('Video-url must be supplied for get video comments')
+            raise Exception('Video-url is required to get video comments')
         # Set default limit of 10
         limit = 10 if not args.limit else args.limit
         response = api.get_video_comments(args.videourl, limit=limit)
@@ -136,12 +137,18 @@ def start_scraper():
         # Create download_dir if it does not exist
         if not os.path.exists(config['download_dir']):
             os.mkdir(config['download_dir'])
-        # Iterate through each video and download & save
+        # Iterate through each video in the response and save
         for item in response:
-            api.pause()
             video_url = item['videoUrl']
             filename = f"{item['likeeId']}_{item['postId']}.mp4"
             filepath = os.path.join(config['download_dir'], filename)
             if args.verbose:
                 print('Downloading: ', filepath)
             api.download_video(video_url, filepath)
+
+    # Quit the Selenium driver
+    api.driver.quit()
+
+
+if __name__ == '__main__':
+    start_scraper()

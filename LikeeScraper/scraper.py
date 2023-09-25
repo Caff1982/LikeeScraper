@@ -2,13 +2,7 @@ import argparse
 import json
 import os
 from LikeeScraper.api import API
-
-# Dictionary to store configuration settings
-config = {
-    'download_dir': 'videos/',
-    'country': 'US',
-    'language': 'en'
-}
+from LikeeScraper import config
 
 
 def usage():
@@ -114,8 +108,7 @@ def start_scraper():
     parser = create_parser()
     args = parser.parse_args()
     # Instantiate API object
-    api = API(country=config['country'],
-              language=config['language'])
+    api = API()
     # Raise an exception if invalid mode entered
     if args.mode not in ('user_id', 'user_info', 'user_post_count',
                          'user_videos', 'trending_videos', 'trending_hashtags',
@@ -150,7 +143,7 @@ def start_scraper():
         if args.videourl is None:
             raise Exception('Video-url is required to get video comments')
         # Set default limit of 10
-        limit = 10 if not args.limit else args.limit
+        limit = config.MAX_VIDEO_COMMENTS if not args.limit else args.limit
         response = api.get_video_comments(args.videourl, limit=limit)
 
     if args.output:  # Save response as json file
@@ -160,13 +153,13 @@ def start_scraper():
         print(json.dumps(response, indent=2))
     if args.download:  # Download videos
         # Create download_dir if it does not exist
-        if not os.path.exists(config['download_dir']):
-            os.mkdir(config['download_dir'])
+        if not os.path.exists(config.DOWNLOAD_DIR):
+            os.mkdir(config.DOWNLOAD_DIR)
         # Iterate through each video in the response and save
         for item in response:
             video_url = item['videoUrl']
             filename = f"{item['likeeId']}_{item['postId']}.mp4"
-            filepath = os.path.join(config['download_dir'], filename)
+            filepath = os.path.join(config.DOWNLOAD_DIR, filename)
             if args.verbose:
                 print('Downloading: ', filepath)
             api.download_video(video_url, filepath)

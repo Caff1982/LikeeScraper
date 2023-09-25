@@ -1,4 +1,4 @@
-pycache/
+__pycache__/
 videos/
 dist/
 geckodriver.log

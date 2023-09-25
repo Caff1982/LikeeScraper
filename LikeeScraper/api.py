@@ -2,14 +2,14 @@ import re
 import time
 import json
 import random
-import urllib.parse
-import os
 
 import requests
 from selenium.webdriver.firefox.options import Options
 from selenium.webdriver import Firefox
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.common.by import By
+
+from LikeeScraper import config
 
 
 class API:
@@ -28,9 +28,12 @@ class API:
         language (str): The language for the API requests. Default is 'en'.
         pause_time (int): The base time (in seconds) to pause between
             requests to avoid rate limits. A random additional time
-            between 0 and 1 second is added to this base time.
+            between 0 and 1 second is added to this base time. Default
+            is 3.
         headless (bool): Whether to run the selenium browser in headless
-            mode, useful for debuggin. Default is True.
+            mode, useful for debugging. Default is True.
+        timeout (int): The timeout time (in seconds) for API requests.
+            Default is 10.
 
     Example:
         api = API(country='UK', language='en')
@@ -39,11 +42,13 @@ class API:
         print(user_info)
     """
 
-    def __init__(self, country='US', language='en',
-                 pause_time=3, headless=True):
+    def __init__(self, country=config.COUNTRY, language=config.LANGUAGE,
+                 pause_time=config.PAUSE_TIME, timeout=config.TIMEOUT_TIME,
+                 headless=config.USE_HEADLESS):
         self.country = country
         self.language = language
         self.pause_time = pause_time
+        self.timeout = timeout
 
         # API endpoints
         self.user_vids_endpoint = 'https://api.like-video.com/likee-activity-flow-micro/videoApi/getUserVideo'
@@ -53,7 +58,7 @@ class API:
         self.hashtag_vids_endpoint = 'https://likee.video/official_website/VideoApi/getEventVideo'
         self.video_comments_endpoint = 'https://likee.video/live/home/comments'
         self.user_post_count_endpoint = 'https://api.like-video.com/likee-activity-flow-micro/userApi/getUserPostNum'
-        
+
         # Creating both JSON and form headers
         self.json_headers = requests.utils.default_headers().update({
                 'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/105.0.0.0 Safari/537.36',
@@ -109,11 +114,13 @@ class API:
         if content_type == 'json':
             response = requests.post(endpoint,
                                      json=payload,
-                                     headers=self.json_headers)
+                                     headers=self.json_headers,
+                                     timeout=self.timeout)
         else:
             response = requests.post(endpoint,
                                      data=payload,
-                                     headers=self.form_headers)
+                                     headers=self.form_headers,
+                                     timeout=self.timeout)
         # Check response has no http errors
         if response.status_code != 200:
             print('HTTP error: ', response.status_code)
@@ -477,7 +484,7 @@ class API:
                                                  'comment-item')
             # Update last_elem variable
             if last_elem == elements[-1]:
-                # If same as before then break
+                # If reached the end of comments, break
                 break
 
             last_elem = elements[-1]
@@ -536,10 +543,10 @@ class API:
         # Removing '_4' from url to ensure the watermark is not present
         video_url = video_url.replace('_4', '')
         try:
-            # Timeout after 10 seconds
+            # Timeout raised if video download takes too long
             video = requests.get(video_url,
                                  headers=self.json_headers,
-                                 timeout=10)
+                                 timeout=self.timeout)
         except requests.exceptions.Timeout:
             print('Timeout error downloading video: ', video_url)
             return

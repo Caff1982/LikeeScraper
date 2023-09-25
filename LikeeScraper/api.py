@@ -490,7 +490,7 @@ class API:
             last_elem = elements[-1]
 
         # Iterate through each comment and append to comment_arr
-        for elem in elements:
+        for elem in elements[:limit]:
             try:  # Handle cases where comment text is not present
                 text = elem.find_element(By.CLASS_NAME,
                                          'msg_min').text
